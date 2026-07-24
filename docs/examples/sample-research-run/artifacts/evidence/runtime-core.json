@@ -1,0 +1,15 @@
+{
+  "targetId": "runtime-core",
+  "rows": [
+    {
+      "claim": "Compaction uses head/tail truncation before model summary",
+      "verdict": "true",
+      "filePath": "src/compaction/truncate.ts"
+    },
+    {
+      "claim": "Cross-session memory tool exists",
+      "verdict": "false",
+      "filePath": "src/tools/registry.ts"
+    }
+  ]
+}

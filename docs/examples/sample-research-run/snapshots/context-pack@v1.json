@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "metadata": {
+    "pipeline_id": "deep-research",
+    "phase_id": "brief",
+    "context_pack_version": 1,
+    "run_id": "2026-07-24-sample-agent-abc12",
+    "slug": "sample-agent"
+  },
+  "L0_constraints": {
+    "researchType": "selection_compare",
+    "scope": "Compare agent runtime memory and compaction models",
+    "forbiddenPaths": []
+  },
+  "L1_session_anchor": {
+    "currentState": "brief",
+    "phaseGoal": "Write research brief with evidence targets"
+  }
+}

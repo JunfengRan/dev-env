@@ -1,0 +1,34 @@
+{
+  "entries": [
+    {
+      "seq": 1,
+      "phase": "brief",
+      "contextPackSnapshot": "snapshots/context-pack@v1.json",
+      "promptHash": "sha256:brief-example",
+      "model": "opus",
+      "artifact": "artifacts/research-brief.json",
+      "gate": "brief-complete",
+      "gateResult": "pass"
+    },
+    {
+      "seq": 2,
+      "phase": "verify",
+      "contextPackSnapshot": "snapshots/context-pack@v1.json",
+      "promptHash": "sha256:verify-example",
+      "model": "opus",
+      "artifact": "artifacts/evidence/runtime-core.json",
+      "gate": "evidence-table-valid",
+      "gateResult": "pass"
+    },
+    {
+      "seq": 3,
+      "phase": "decide",
+      "contextPackSnapshot": "context-pack.json",
+      "promptHash": "sha256:decide-example",
+      "model": "opus",
+      "artifact": "docs/design/sample-agent-selection.md",
+      "gate": "decision-doc-complete",
+      "gateResult": "pass"
+    }
+  ]
+}

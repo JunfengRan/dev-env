@@ -1,0 +1,3 @@
+{"ts":"2026-07-24T06:10:00Z","actor":{"type":"subagent","id":"runtime-core","agent":"codebase-verifier"},"phase":"verify","kind":"evidence_row","payload":{"claim":"Compaction uses head/tail truncation","verdict":"true","filePath":"src/compaction/truncate.ts"},"contextPackVersion":3}
+{"ts":"2026-07-24T06:35:00Z","actor":{"type":"gate","id":"evidence-table-valid"},"phase":"verify","kind":"gate_result","payload":{"result":"pass"},"contextPackVersion":3}
+{"ts":"2026-07-24T07:00:00Z","actor":{"type":"gate","id":"decision-doc-complete"},"phase":"decide","kind":"gate_result","payload":{"result":"pass"},"contextPackVersion":4}

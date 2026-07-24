@@ -1,0 +1,22 @@
+{
+  "entries": [
+    {
+      "id": "SR-01",
+      "claim": "No cross-session memory in V1",
+      "verdict": "true",
+      "category": "memory"
+    },
+    {
+      "id": "SR-02",
+      "claim": "Compaction is head/tail + summary",
+      "verdict": "true",
+      "category": "compaction"
+    },
+    {
+      "id": "SR-03",
+      "claim": "Unified event bus for all surfaces",
+      "verdict": "partial",
+      "category": "event_bus"
+    }
+  ]
+}

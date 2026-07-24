@@ -1,0 +1,37 @@
+{
+  "runId": "2026-07-24-sample-agent-abc12",
+  "workflowId": "deep-research",
+  "currentState": "done",
+  "barrier": {
+    "expected": 0,
+    "completed": 0,
+    "pendingSubagents": []
+  },
+  "aborted": false,
+  "history": [
+    {
+      "at": "2026-07-24T06:05:00Z",
+      "event": "GATE_PASSED",
+      "from": "brief",
+      "to": "explore"
+    },
+    {
+      "at": "2026-07-24T06:20:00Z",
+      "event": "GATE_PASSED",
+      "from": "explore",
+      "to": "verify"
+    },
+    {
+      "at": "2026-07-24T06:35:00Z",
+      "event": "GATE_PASSED",
+      "from": "verify",
+      "to": "consolidate"
+    },
+    {
+      "at": "2026-07-24T07:00:00Z",
+      "event": "GATE_PASSED",
+      "from": "decide",
+      "to": "done"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+---
+description: Agent 终端下 git commit 需避开 CI=1，避免企业定制 Git 的 Made-with trailer 破坏说明
+alwaysApply: true
+---
+
+# Git commit（Cursor Agent 终端）
+
+Cursor 在 **Agent 执行的终端命令**里会注入环境变量 **`CI=1`**（见官方文档：[Agent troubleshooting - CI=1](https://cursor.com/help/troubleshooting/agent-issues)）。部分企业定制 Git 在 `CI=1` 或非交互场景下会附加 **`--trailer Made-with:`**（空值），经 `git interpret-trailers` 后可能把 `-m` / `-F` 写好的标题清空，表现为提交说明只剩 `Made-with:`。这与「工具篡改说明」无关，而是 **Agent 环境与本地交互式 shell 的环境不一致**。
+
+## 要求
+
+在 **本工作区** 通过 Agent 执行 `git commit` / `git commit --amend` 时，必须 **先去掉 CI**，再调用 git，例如：
+
+```bash
+unset CI && git commit -m "your message"
+```
+
+或：
+
+```bash
+env -u CI git commit -F path/to/msg.txt
+```
+
+若仍遇到 `Terminal is dumb, but EDITOR unset`，再叠加：
+
+```bash
+unset CI && GIT_EDITOR=true git commit -m "your message"
+```
+
+## 说明
+
+- 你在 **自己打开的 bash** 里通常 **没有** `CI=1`，因此行为与 Agent 不同；这不是 Cursor「侵蚀」提交正文，而是文档已说明的 **CI 注入** 与 **定制 Git** 的组合效应。
+- 其他 Agent 相关变量见 [Terminal 文档 - Environment variables](https://cursor.com/docs/agent/terminal)（如 `CURSOR_AGENT`、`CURSOR_SANDBOX` 等）；若工具链依赖 `CI`，仅在 `git commit` 这一行 `unset CI` 即可。

@@ -1,0 +1,41 @@
+name: Validate Research Workflow
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "spec/**"
+      - "scripts/**"
+      - "plugins/deep-research-gates/**"
+      - "docs/examples/sample-research-run/**"
+      - "package.json"
+      - ".github/workflows/validate-research.yml"
+  pull_request:
+    paths:
+      - "spec/**"
+      - "scripts/**"
+      - "plugins/deep-research-gates/**"
+      - "docs/examples/sample-research-run/**"
+      - "package.json"
+      - ".github/workflows/validate-research.yml"
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run validate:research-spec
+
+      - run: npm run test:reducer
+
+      - run: npm run test:research-cli
+
+      - run: npm run test:gates

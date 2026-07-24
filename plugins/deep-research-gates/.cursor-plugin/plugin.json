@@ -1,0 +1,20 @@
+{
+  "name": "deep-research-gates",
+  "displayName": "Deep Research Gates",
+  "version": "1.0.0",
+  "description": "Deterministic phase gates and subagent barrier sync for deep-research workflow runs.",
+  "author": {
+    "name": "Junfeng Ran"
+  },
+  "license": "MIT",
+  "keywords": [
+    "deep-research",
+    "gates",
+    "hooks",
+    "workflow",
+    "context-pack"
+  ],
+  "category": "developer-tools",
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json"
+}

@@ -1,0 +1,7 @@
+{
+  "runId": "2026-07-24-sample-agent-abc12",
+  "workflowId": "deep-research",
+  "startedAt": "2026-07-24T06:00:00Z",
+  "slug": "sample-agent",
+  "parentSessionId": "example-session"
+}

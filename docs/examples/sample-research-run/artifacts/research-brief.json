@@ -1,0 +1,12 @@
+{
+  "reader": "System engineer evaluating agent runtimes",
+  "scope": "Memory, compaction, and cross-session recall in sample runtime",
+  "researchType": "selection_compare",
+  "evidenceTargets": [
+    {
+      "targetId": "runtime-core",
+      "repoPath": "/path/to/sample-runtime",
+      "focusPaths": ["src/session/", "src/compaction/"]
+    }
+  ]
+}

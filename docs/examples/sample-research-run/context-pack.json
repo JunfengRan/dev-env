@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "metadata": {
+    "pipeline_id": "deep-research",
+    "phase_id": "done",
+    "context_pack_version": 4,
+    "run_id": "2026-07-24-sample-agent-abc12",
+    "slug": "sample-agent"
+  },
+  "L0_constraints": {
+    "researchType": "selection_compare",
+    "scope": "Compare agent runtime memory and compaction models",
+    "forbiddenPaths": []
+  },
+  "L1_session_anchor": {
+    "currentState": "done",
+    "phaseGoal": "Finalize selection decision document",
+    "gateLastResult": {
+      "gate": "decision-doc-complete",
+      "result": "pass"
+    }
+  },
+  "L2_dialogue_window": {
+    "summary": "Explored call chains, verified compaction behavior in source, compared three runtimes."
+  },
+  "L3_evidence_layer": {
+    "evidenceTargets": [
+      {
+        "targetId": "runtime-core",
+        "repoPath": "/path/to/sample-runtime",
+        "focusPaths": ["src/session/", "src/compaction/"]
+      }
+    ],
+    "mergedEvidence": [
+      {
+        "claim": "Compaction uses head/tail truncation before model summary",
+        "verdict": "true",
+        "filePath": "src/compaction/truncate.ts",
+        "targetId": "runtime-core"
+      }
+    ]
+  },
+  "L4_knowledge_refs": {
+    "existingNotes": ["docs/knowledge/apps/sample-runtime-note.md"],
+    "compareDimensions": ["memory", "compaction", "event_bus"]
+  },
+  "L5_subagent_observations": {
+    "barrier": { "expected": 1, "completed": 1 },
+    "items": [
+      {
+        "subagentId": "runtime-core",
+        "status": "completed",
+        "artifact": "artifacts/evidence/runtime-core.json"
+      }
+    ]
+  }
+}

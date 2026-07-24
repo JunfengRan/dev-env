@@ -1,0 +1,38 @@
+{
+  "name": "dev-env",
+  "private": true,
+  "type": "module",
+  "description": "Cursor agent workflow pack: Spec state machine, ContextPack, and deterministic gates for deep research.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JunfengRan/dev-env.git"
+  },
+  "homepage": "https://github.com/JunfengRan/dev-env#readme",
+  "bugs": {
+    "url": "https://github.com/JunfengRan/dev-env/issues"
+  },
+  "keywords": [
+    "cursor",
+    "agent-skills",
+    "deep-research",
+    "ai-agents",
+    "workflow",
+    "context-pack"
+  ],
+  "scripts": {
+    "validate:mermaid": "node scripts/validate-mermaid.mjs",
+    "validate:research-spec": "node scripts/validate-research-spec.mjs",
+    "test:gates": "node scripts/test-gates.mjs",
+    "test:reducer": "node scripts/test-reducer.mjs",
+    "test:research-cli": "node scripts/test-research-cli.mjs",
+    "research": "node scripts/research-cli.mjs",
+    "validate": "npm run validate:mermaid && npm run validate:research-spec && npm run test:gates && npm run test:reducer && npm run test:research-cli"
+  },
+  "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.6.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.8.0"
+  }
+}

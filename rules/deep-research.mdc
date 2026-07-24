@@ -1,0 +1,30 @@
+---
+description: Deep research 工作流 — Spec 状态机、ContextPack、Gate 门禁
+globs: docs/**,.research/**
+alwaysApply: false
+---
+
+# Deep Research 规则
+
+## Run 初始化
+
+深度研究任务必须先创建 `.research/<run-id>/` 并初始化 context-pack、state、observations、replay-chain。
+
+## 状态机
+
+- 当前阶段以 `spec/research-workflow.yaml` + `state.json` 为准
+- 不得跳过 gate 未通过的 transition
+- 子 agent 观测必须写入 `observations.jsonl`
+
+## 证据
+
+每个非平凡结论需 evidence（文件路径 / URL）；verify 阶段用 codebase-verifier subagent。
+
+## 验证
+
+- 含 Mermaid 的 md：`npm run validate:mermaid`
+- 阶段产物：对应 `scripts/gates/*.mjs`
+
+## 与快速实现分离
+
+实现型任务走 dev-workflow；研究/选型/对比走 deep-research skill。

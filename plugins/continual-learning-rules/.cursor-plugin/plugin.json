@@ -1,0 +1,26 @@
+{
+  "name": "continual-learning-rules",
+  "displayName": "Continual Learning (Rules)",
+  "version": "1.0.0",
+  "description": "Incrementally learns durable user preferences and workspace facts from transcript changes and routes them into categorized .cursor/rules/*.mdc files.",
+  "author": {
+    "name": "Junfeng Ran"
+  },
+  "license": "MIT",
+  "logo": "assets/avatar.png",
+  "keywords": [
+    "continual-learning",
+    "agent-memory",
+    "transcripts",
+    "hooks",
+    "incremental"
+  ],
+  "category": "developer-tools",
+  "tags": [
+    "automation",
+    "memory",
+    "transcripts"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json"
+}
