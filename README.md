@@ -103,12 +103,48 @@ npm run research -- apply .research/<run-id> '{"type":"SUBAGENT_COMPLETED","suba
 
 ## Deep Research 工作流
 
+真相源：[`spec/research-workflow.yaml`](spec/research-workflow.yaml)。主路径：`brief → explore → verify → consolidate → compare → crystallize → decide → done`；gate 失败停留当前态，任意阶段可 `USER_ABORT → aborted`。
+
 ```mermaid
-flowchart LR
-    Spec[YAML Spec] --> Run[".research/run-id/"]
-    Run --> CP[ContextPack]
-    Run --> Gate[Gate Scripts]
-    Gate -->|pass| Next[Next State]
+flowchart TB
+  subgraph specLayer ["Spec层_机器可读"]
+    YAML["spec/research-workflow.yaml"]
+    Schema["spec/schemas/*.json"]
+  end
+  subgraph runtime ["运行时_工作区"]
+    RunDir[".research/run-id/"]
+    CP[context-pack.json]
+    Obs[observations.jsonl]
+    Art["artifacts/"]
+    Replay[replay-chain.json]
+  end
+  subgraph hooks ["Hook门禁层"]
+    BeforePhase[beforePhaseTransition]
+    AfterSub[afterSubagentComplete]
+    GateScripts["scripts/gates/*.mjs"]
+  end
+  subgraph agents ["Agent层"]
+    Parent["deep-research agent"]
+    Sub["codebase-verifier subagent"]
+  end
+  subgraph skills ["Skill层_薄编排"]
+    DRS["deep-research SKILL"]
+    ITN[interpret-tech-notes]
+    WID[write-idea-docs]
+  end
+  YAML --> DRS
+  DRS --> Parent
+  Parent --> RunDir
+  Parent --> Sub
+  Sub --> Obs
+  BeforePhase --> GateScripts
+  GateScripts -->|pass| Parent
+  GateScripts -->|fail| Parent
+  CP --> Parent
+  CP --> Sub
+  Obs --> CP
+  Art --> GateScripts
+  RunDir --> Replay
 ```
 
 1. 读 `spec/research-workflow.yaml`
