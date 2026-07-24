@@ -38,6 +38,12 @@ alwaysApply: true
 - 研究、选型、竞品对比、决策文档 → `deep-research` skill + Spec 状态机
 - 功能实现、bug 修复 → 本规则快速路径
 
+## 启发式 brainstorm（可选）
+
+- 新功能/架构意图未对齐时，可建议使用 `brainstorm` skill（一次一问、2–3 方案取舍）
+- **非硬门禁**：用户已有明确计划、或改动琐碎、或明确拒绝时跳过
+- 不进入 research Spec 状态机；需要落盘时交给 `write-idea-docs` 或写入 research brief 草稿
+
 ## 不做多余的事
 
 - 用户说"不需要"的功能就不做

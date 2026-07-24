@@ -9,6 +9,14 @@ description: >-
 
 **阶段定义不在本 SKILL** — 唯一真相源是 [`spec/research-workflow.yaml`](../../spec/research-workflow.yaml)。
 
+## 启发式补充（非 Spec 阶段）
+
+研究问题或选型边界仍模糊时，**可先**用 [`brainstorm`](../brainstorm/SKILL.md) 做几轮澄清与方案对比，再把结论写进 `research-brief.json`。
+
+- brainstorm **不是** Spec state，不经 gate / reducer
+- 用户已明确读者、scope、evidenceTargets 时可跳过
+- 交接模板见 `brainstorm/references/handoff-templates.md`
+
 ## 启动 / 恢复 Run
 
 1. 用 CLI 新建 run（推荐）或恢复已有目录（见 [`spec/run-directory.md`](../../spec/run-directory.md)）：

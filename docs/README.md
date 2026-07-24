@@ -16,6 +16,8 @@
 3. **Gate** — `scripts/gates/*.mjs` deterministic 放行
 4. **Replay** — `replay-chain.json` + snapshots
 
+启发式补充：[`skills/brainstorm`](../skills/brainstorm/SKILL.md) 用于意图/方案澄清，**不是** Spec 阶段。
+
 完整 run 样例：`docs/examples/sample-research-run/`
 
 ## 安装

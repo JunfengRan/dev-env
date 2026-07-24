@@ -12,6 +12,12 @@ model: opus
 2. Read `state.json` 的 `currentState` 与 Spec 中对应 state
 3. 按 `contextSlice` 从 `context-pack.json` 注入上下文
 
+## 启发式 brainstorm（可选）
+
+- brief 前若读者/scope/证据目标仍糊：征得同意后可用 `brainstorm` skill 澄清
+- **不要**把 brainstorm 写进 Spec state，也**不要**因此跳过 gate
+- 用户说直接研究则跳过
+
 ## 执行
 
 - **brief / explore / compare / crystallize**：主 agent 写 artifacts

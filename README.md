@@ -13,6 +13,7 @@
 | 类别 | 内容 |
 |------|------|
 | **核心** | `spec/`、`scripts/`（reducer / gates / research-cli）、`agents/deep-research*`、`skills/deep-research`、`rules/deep-research.mdc`、`plugins/deep-research-gates` |
+| **启发式补充** | `skills/brainstorm` — 创意澄清与方案取舍（**非** Spec 硬阶段） |
 | **附带（可选）** | Vue / Electron / Pinia 等最佳实践 skills、`plugins/continual-learning-rules`、项目 overlay 示例 |
 
 ## 组件
@@ -23,7 +24,7 @@
 | [`scripts/`](scripts/) | Mermaid/research 校验、reducer、gate、**research-cli** |
 | [`agents/`](agents/) | deep-research、codebase-verifier、code-simplifier |
 | [`rules/`](rules/) | 通用工作流规则（deep-research / dev-workflow / git-commit） |
-| [`skills/`](skills/) | deep-research、interpret-tech-notes、write-idea-docs 等 |
+| [`skills/`](skills/) | deep-research、brainstorm（启发式）、interpret-tech-notes、write-idea-docs 等 |
 | [`plugins/`](plugins/) | continual-learning-rules、deep-research-gates |
 | [`docs/`](docs/) | 示例、产出目录、可选项目 overlay |
 
@@ -39,6 +40,8 @@ cp -r rules/ .cursor/rules/
 cp -r agents/ .cursor/agents/
 mkdir -p .cursor/skills
 cp -r skills/deep-research .cursor/skills/
+# 可选：意图澄清（非 Spec 阶段）
+cp -r skills/brainstorm .cursor/skills/
 # 若要用 consolidate / decide 阶段，一并复制：
 cp -r skills/interpret-tech-notes .cursor/skills/
 cp -r skills/write-idea-docs .cursor/skills/
@@ -131,6 +134,7 @@ flowchart TB
     DRS["deep-research SKILL"]
     ITN[interpret-tech-notes]
     WID[write-idea-docs]
+    BS["brainstorm 启发式"]
   end
   YAML --> DRS
   DRS --> Parent
@@ -145,6 +149,8 @@ flowchart TB
   Obs --> CP
   Art --> GateScripts
   RunDir --> Replay
+  BS -.->|"可选澄清"| DRS
+  BS -.->|"可选"| WID
 ```
 
 1. 读 `spec/research-workflow.yaml`
@@ -152,6 +158,8 @@ flowchart TB
 3. 按 state 执行 agent/skill/subagent
 4. `npm run research -- advance`：gate 验证后推进状态并 bump ContextPack
 5. ContextPack 版本化 + replay-chain 记录
+
+可选：意图未对齐时用 [`skills/brainstorm`](skills/brainstorm/SKILL.md) 做启发式澄清（**不**进入 Spec 状态机）。
 
 详见 [`skills/deep-research/SKILL.md`](skills/deep-research/SKILL.md) 与 [`docs/examples/sample-research-run/`](docs/examples/sample-research-run/)。
 

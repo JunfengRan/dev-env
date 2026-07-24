@@ -38,5 +38,6 @@ description: >-
 
 ## 协作
 
+- 意图/方案未对齐时 → 可选 [`brainstorm`](../brainstorm/SKILL.md)（启发式，非必经）
 - 画图 → `draw-mermaid-diagrams`
 - 由 `deep-research` workflow 的 `decide` 状态调用
