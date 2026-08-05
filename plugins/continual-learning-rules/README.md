@@ -1,6 +1,6 @@
 # Continual Learning
 
-Automatically and incrementally keeps `AGENTS.md` up to date from transcript changes.
+Automatically and incrementally keeps categorized `.cursor/rules/*.mdc` files up to date from transcript changes.
 
 The plugin combines:
 
@@ -9,15 +9,14 @@ The plugin combines:
 
 It is designed to avoid noisy rewrites by:
 
-- Reading existing `AGENTS.md` first and updating matching bullets in place.
+- Reading existing `.cursor/rules/*.mdc` files first and updating matching bullets in place.
 - Processing only new or changed transcript files.
-- Writing plain bullet points only (no evidence/confidence metadata).
+- Routing durable preferences and workspace facts to the narrowest matching rule.
 
 ## Installation
 
-```bash
-/add-plugin continual-learning
-```
+Install `continual-learning-rules` from this repository's Cursor marketplace,
+or copy this plugin directory into the Cursor user plugin directory.
 
 ## How it works
 
@@ -61,14 +60,12 @@ Trial mode defaults (enabled in this plugin hook config):
 
 They are orthogonal: preferences vs. research process compliance.
 
-## Output format in AGENTS.md
+## Output format in Cursor rules
 
-The skill writes only:
-
-- `## Learned User Preferences`
-- `## Learned Workspace Facts`
-
-Each item is a plain bullet point.
+The skill updates matching `.cursor/rules/*.mdc` files in place. When no
+existing rule is suitable, it creates a focused rule with `description`,
+`globs`, and `alwaysApply` frontmatter. It never writes secrets or transient
+branch/session details.
 
 ## License
 

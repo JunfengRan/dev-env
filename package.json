@@ -3,6 +3,13 @@
   "private": true,
   "type": "module",
   "description": "Cursor agent workflow pack: Spec state machine, ContextPack, and deterministic gates for deep research.",
+  "engines": {
+    "node": ">=22 <27",
+    "npm": ">=10"
+  },
+  "allowScripts": {
+    "puppeteer": false
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -23,11 +30,17 @@
   "scripts": {
     "validate:mermaid": "node scripts/validate-mermaid.mjs",
     "validate:research-spec": "node scripts/validate-research-spec.mjs",
+    "validate:plugins": "node scripts/validate-plugins.mjs",
+    "validate:ci": "node scripts/validate-ci.mjs",
     "test:gates": "node scripts/test-gates.mjs",
     "test:reducer": "node scripts/test-reducer.mjs",
     "test:research-cli": "node scripts/test-research-cli.mjs",
+    "test:persistence": "node scripts/test-run-persistence.mjs",
+    "test:integrity": "node scripts/test-run-integrity.mjs",
+    "test:plugins": "node scripts/test-plugins.mjs",
+    "test:hooks": "node scripts/test-hooks.mjs",
     "research": "node scripts/research-cli.mjs",
-    "validate": "npm run validate:mermaid && npm run validate:research-spec && npm run test:gates && npm run test:reducer && npm run test:research-cli"
+    "validate": "npm run validate:mermaid && npm run validate:research-spec && npm run validate:plugins && npm run validate:ci && npm run test:gates && npm run test:reducer && npm run test:persistence && npm run test:integrity && npm run test:plugins && npm run test:research-cli"
   },
   "devDependencies": {
     "@mermaid-js/mermaid-cli": "^11.6.0",

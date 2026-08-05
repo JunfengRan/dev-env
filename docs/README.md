@@ -14,7 +14,7 @@
 1. **Spec** — `spec/research-workflow.yaml` 状态机
 2. **ContextPack** — `.research/<run-id>/context-pack.json` 分层上下文
 3. **Gate** — `scripts/gates/*.mjs` deterministic 放行
-4. **Replay** — `replay-chain.json` + snapshots
+4. **Auditable resume** — `replay-chain.json` + snapshots + artifact SHA-256
 
 启发式补充：[`skills/brainstorm`](../skills/brainstorm/SKILL.md) 用于意图/方案澄清，**不是** Spec 阶段。
 
@@ -29,4 +29,5 @@
 ```bash
 npm ci
 npm run validate
+npm run research -- verify .research/<run-id>
 ```

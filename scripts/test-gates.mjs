@@ -67,6 +67,63 @@ function main() {
   } else {
     console.log("OK brief-complete fails on invalid brief");
   }
+  writeFileSync(
+    join(TEMP_RUN, "artifacts", "research-brief.json"),
+    `${JSON.stringify({
+      reader: "developer",
+      scope: "test",
+      evidenceTargets: [{ targetId: "../outside", repoPath: "." }],
+    })}\n`,
+    "utf8",
+  );
+  if (!runGateExpectFail("brief-complete", TEMP_RUN)) {
+    console.error("FAIL brief-complete should reject unsafe targetId");
+    failed += 1;
+  } else {
+    console.log("OK brief-complete rejects unsafe targetId");
+  }
+
+  setupTempRun();
+  const explorePath = join(TEMP_RUN, "artifacts", "explore-notes.md");
+  writeFileSync(
+    explorePath,
+    `## 背景\n\n${"研".repeat(150)}\n\n## 实现\n\n${"究".repeat(150)}\n\n## 结论\n\n${"证".repeat(150)}\n`,
+    "utf8",
+  );
+  try {
+    runGate("explore-min-depth", TEMP_RUN);
+    console.log("OK explore-min-depth accepts substantial Chinese content");
+  } catch (err) {
+    console.error(`FAIL substantial Chinese content: ${err.stderr ?? err.message}`);
+    failed += 1;
+  }
+  writeFileSync(
+    explorePath,
+    "## 背景\n\n内容\n\n## 实现\n\n内容\n\n## 结论\n\n内容\n",
+    "utf8",
+  );
+  if (!runGateExpectFail("explore-min-depth", TEMP_RUN)) {
+    console.error("FAIL explore-min-depth should reject short Chinese content");
+    failed += 1;
+  } else {
+    console.log("OK explore-min-depth rejects short Chinese content");
+  }
+
+  setupTempRun();
+  const contextPackPath = join(TEMP_RUN, "context-pack.json");
+  const contextPack = JSON.parse(readFileSync(contextPackPath, "utf8"));
+  contextPack.L3_evidence_layer.evidenceTargets.push({
+    targetId: "missing-target",
+    repoPath: "/path/to/missing",
+    focusPaths: ["src/"],
+  });
+  writeFileSync(contextPackPath, `${JSON.stringify(contextPack, null, 2)}\n`, "utf8");
+  if (!runGateExpectFail("evidence-table-valid", TEMP_RUN)) {
+    console.error("FAIL evidence gate should reject missing target artifact");
+    failed += 1;
+  } else {
+    console.log("OK evidence gate rejects missing target artifact");
+  }
 
   setupTempRun();
   try {

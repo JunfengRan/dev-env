@@ -73,6 +73,19 @@ function handleGateResult(runState, spec, event) {
   if (!stateDef || stateDef.kind === "terminal") {
     return { runState, error: `Cannot gate-transition from terminal state ${stateName}` };
   }
+  if (event.gate !== stateDef.gate) {
+    return {
+      runState,
+      error: `Gate "${event.gate}" does not match state "${stateName}" gate "${stateDef.gate}"`,
+    };
+  }
+  if (
+    event.type === "GATE_PASSED" &&
+    stateDef.kind === "parallel_subagents" &&
+    !isBarrierComplete(runState)
+  ) {
+    return { runState, error: `Cannot pass state "${stateName}": barrier incomplete` };
+  }
 
   if (event.type === "GATE_PASSED") {
     return transitionTo(runState, spec, stateName, stateDef.onPass, event);
@@ -90,6 +103,12 @@ function handleSubagentCompleted(runState, spec, event) {
   const stateDef = getStateDef(spec, stateName);
   if (!stateDef || stateDef.kind !== "parallel_subagents") {
     return { runState, error: `SUBAGENT_COMPLETED invalid in state ${stateName}` };
+  }
+  if (!runState.barrier.pendingSubagents.includes(event.subagentId)) {
+    return {
+      runState,
+      error: `Subagent "${event.subagentId}" is not pending in state "${stateName}"`,
+    };
   }
 
   const pending = runState.barrier.pendingSubagents.filter((id) => id !== event.subagentId);
@@ -123,6 +142,18 @@ function handleEnterVerify(runState, spec, evidenceTargets = []) {
   }
 
   const ids = evidenceTargets.map((t) => t.targetId ?? t);
+  if (ids.some((id) => typeof id !== "string" || id.trim() === "")) {
+    return { runState, error: "Evidence target ids must be non-empty strings" };
+  }
+  if (ids.some((id) => !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(id))) {
+    return {
+      runState,
+      error: "Evidence target ids must be safe identifiers",
+    };
+  }
+  if (new Set(ids).size !== ids.length) {
+    return { runState, error: "Evidence target ids must be unique" };
+  }
   return {
     runState: {
       ...runState,
@@ -153,6 +184,12 @@ export function reduce(runState, event, spec) {
     }
 
     case "PHASE_ENTER": {
+      if (event.state !== runState.currentState) {
+        return {
+          runState,
+          error: `PHASE_ENTER state "${event.state}" does not match current state "${runState.currentState}"`,
+        };
+      }
       if (event.state === "verify" && Array.isArray(event.evidenceTargets)) {
         const withBarrier = handleEnterVerify(runState, spec, event.evidenceTargets);
         return withBarrier;

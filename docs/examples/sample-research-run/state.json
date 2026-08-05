@@ -13,25 +13,41 @@
       "at": "2026-07-24T06:05:00Z",
       "event": "GATE_PASSED",
       "from": "brief",
-      "to": "explore"
+      "to": "explore",
+      "detail": {
+        "type": "GATE_PASSED",
+        "gate": "brief-complete"
+      }
     },
     {
       "at": "2026-07-24T06:20:00Z",
       "event": "GATE_PASSED",
       "from": "explore",
-      "to": "verify"
+      "to": "verify",
+      "detail": {
+        "type": "GATE_PASSED",
+        "gate": "explore-min-depth"
+      }
     },
     {
       "at": "2026-07-24T06:35:00Z",
       "event": "GATE_PASSED",
       "from": "verify",
-      "to": "consolidate"
+      "to": "consolidate",
+      "detail": {
+        "type": "GATE_PASSED",
+        "gate": "evidence-table-valid"
+      }
     },
     {
       "at": "2026-07-24T07:00:00Z",
       "event": "GATE_PASSED",
       "from": "decide",
-      "to": "done"
+      "to": "done",
+      "detail": {
+        "type": "GATE_PASSED",
+        "gate": "decision-doc-complete"
+      }
     }
   ]
 }

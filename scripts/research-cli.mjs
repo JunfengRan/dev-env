@@ -8,7 +8,6 @@
  *   node scripts/research-cli.mjs advance [run-dir]
  */
 import {
-  appendFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -20,11 +19,19 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createInitialRunState, loadWorkflowSpec, reduce } from "./research-reducer.mjs";
+import {
+  appendJsonLine,
+  atomicWriteJson,
+  withRunLock,
+} from "./run-persistence.mjs";
+import { createReplayEntry, verifyRun } from "./run-integrity.mjs";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(SCRIPT_DIR, "..");
 const RESEARCH_DIR = join(ROOT, ".research");
 const BUMP_SCRIPT = join(ROOT, "plugins", "deep-research-gates", "scripts", "bump-context-pack.mjs");
+const RUN_ID_PATTERN =
+  /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])-[a-z0-9]+(?:-[a-z0-9]+)*-[a-z0-9]{5,12}$/;
 
 function usage(exitCode = 1) {
   console.error(`usage:
@@ -32,6 +39,7 @@ function usage(exitCode = 1) {
   node scripts/research-cli.mjs status [run-dir]
   node scripts/research-cli.mjs apply <run-dir> <event.json|->
   node scripts/research-cli.mjs advance [run-dir]
+  node scripts/research-cli.mjs verify [run-dir]
 
 Active run resolution: --run-id / RESEARCH_RUN_ID, else newest non-terminal .research/*/state.json`);
   process.exit(exitCode);
@@ -43,7 +51,12 @@ function parseArgs(argv) {
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
     if (a === "--slug" || a === "--run-id") {
-      flags[a.slice(2)] = argv[++i];
+      const value = argv[i + 1];
+      if (!value || value.startsWith("-")) {
+        throw new Error(`${a} requires a value`);
+      }
+      flags[a.slice(2)] = value;
+      i += 1;
     } else if (a === "--help" || a === "-h") {
       flags.help = true;
     } else {
@@ -53,12 +66,20 @@ function parseArgs(argv) {
   return { args, flags };
 }
 
+function validateRunId(runId) {
+  if (typeof runId !== "string" || !RUN_ID_PATTERN.test(runId)) {
+    throw new Error(
+      `invalid run id "${runId ?? ""}"; expected YYYY-MM-DD-slug-shortHash`,
+    );
+  }
+}
+
 function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
 function writeJson(path, value) {
-  writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  atomicWriteJson(path, value);
 }
 
 function ensureDir(path) {
@@ -76,6 +97,7 @@ function resolveRunDir(explicit, flags = {}) {
 
   const runId = flags["run-id"] || process.env.RESEARCH_RUN_ID;
   if (runId) {
+    validateRunId(runId);
     const path = join(RESEARCH_DIR, runId);
     if (!existsSync(join(path, "state.json"))) {
       throw new Error(`RESEARCH_RUN_ID/run-id not found: ${path}`);
@@ -157,13 +179,38 @@ function appendReplayEntry(runDir, entry) {
   writeJson(path, chain);
 }
 
+function replayArtifacts(runDir, stateDef) {
+  const declared = [
+    ...(stateDef.outputs ?? []),
+    ...(stateDef.spawn ?? []).flatMap((spawn) => spawn.outputs ?? []),
+  ];
+  const artifacts = [];
+  for (const output of declared) {
+    if (typeof output !== "string" || !output.startsWith("artifacts/")) continue;
+    if (output.endsWith("/*.json")) {
+      const directory = output.slice(0, -"/*.json".length);
+      const absoluteDirectory = join(runDir, directory);
+      if (!existsSync(absoluteDirectory)) continue;
+      for (const name of readdirSync(absoluteDirectory).filter((file) =>
+        file.endsWith(".json"),
+      )) {
+        artifacts.push(`${directory}/${name}`);
+      }
+    } else if (!output.includes("{") && existsSync(join(runDir, output))) {
+      artifacts.push(output);
+    }
+  }
+  return [...new Set(artifacts)].sort();
+}
+
 function appendObservation(runDir, observation) {
   const path = join(runDir, "observations.jsonl");
-  appendFileSync(path, `${JSON.stringify(observation)}\n`, "utf8");
+  appendJsonLine(path, observation);
 }
 
 function cmdInit(runId, flags) {
   if (!runId) usage();
+  validateRunId(runId);
   const runDir = join(RESEARCH_DIR, runId);
   if (existsSync(join(runDir, "state.json"))) {
     console.error(`run already exists: ${runDir}`);
@@ -235,7 +282,7 @@ function applyEvent(runDir, event) {
   return result;
 }
 
-function cmdApply(runDirArg, eventArg, flags) {
+async function cmdApply(runDirArg, eventArg, flags) {
   if (!runDirArg || eventArg === undefined) usage();
   const runDir = resolveRunDir(runDirArg, flags);
   let raw = eventArg;
@@ -243,7 +290,12 @@ function cmdApply(runDirArg, eventArg, flags) {
     raw = readFileSync(0, "utf8");
   }
   const event = typeof raw === "string" ? JSON.parse(raw) : raw;
-  const result = applyEvent(runDir, event);
+  if (event?.type === "GATE_PASSED" || event?.type === "GATE_FAILED") {
+    throw new Error(
+      `${event.type} cannot be applied directly; use research-cli advance`,
+    );
+  }
+  const result = await withRunLock(runDir, async () => applyEvent(runDir, event));
   console.log(
     JSON.stringify(
       {
@@ -276,96 +328,127 @@ function runGateScript(gate, runDir) {
   }
 }
 
-function cmdAdvance(runDirArg, flags) {
+async function cmdAdvance(runDirArg, flags) {
   const runDir = resolveRunDir(runDirArg, flags);
-  const spec = loadWorkflowSpec();
-  const state = readJson(join(runDir, "state.json"));
-  const stateName = state.currentState;
-  const stateDef = spec.states[stateName];
+  return withRunLock(runDir, async () => {
+    const spec = loadWorkflowSpec();
+    const state = readJson(join(runDir, "state.json"));
+    const stateName = state.currentState;
+    const stateDef = spec.states[stateName];
 
-  if (!stateDef || stateDef.kind === "terminal") {
-    console.error(`cannot advance from terminal/unknown state: ${stateName}`);
-    process.exit(1);
-  }
+    if (!stateDef || stateDef.kind === "terminal") {
+      throw new Error(`cannot advance from terminal/unknown state: ${stateName}`);
+    }
 
-  const gate = stateDef.gate;
-  if (!gate) {
-    console.error(`state ${stateName} has no gate`);
-    process.exit(1);
-  }
+    const gate = stateDef.gate;
+    if (!gate) {
+      throw new Error(`state ${stateName} has no gate`);
+    }
 
-  if (gate === "optional") {
-    writeGateLastResult(runDir, { gate, result: "pass", reason: "optional gate" });
+    if (gate === "optional") {
+      const result = applyEvent(runDir, { type: "GATE_PASSED", gate });
+      writeGateLastResult(runDir, { gate, result: "pass", reason: "optional gate" });
+      const nextState = result.runState.currentState;
+      execFileSync(process.execPath, [BUMP_SCRIPT, runDir, nextState], {
+        cwd: ROOT,
+        stdio: "inherit",
+        env: { ...process.env, RESEARCH_LOCK_HELD: "1" },
+      });
+      const pack = readJson(join(runDir, "context-pack.json"));
+      const contextPackSnapshot =
+        `snapshots/context-pack@v${pack.metadata.context_pack_version}.json`;
+      appendReplayEntry(runDir, createReplayEntry({
+        runDir,
+        phase: stateName,
+        nextPhase: nextState,
+        workflowId: spec.workflowId,
+        schemaVersion: spec.schemaVersion,
+        contextPackSnapshot,
+        artifacts: replayArtifacts(runDir, stateDef),
+        gate,
+        gateResult: "pass",
+      }));
+      console.log(
+        JSON.stringify({ ok: true, gate, result: "pass", from: stateName, to: nextState }),
+      );
+      return;
+    }
+
+    const gateResult = runGateScript(gate, runDir);
+    if (!gateResult.ok) {
+      writeGateLastResult(runDir, {
+        gate,
+        result: "fail",
+        reason: gateResult.reason,
+      });
+      appendObservation(runDir, {
+        ts: new Date().toISOString(),
+        actor: { type: "system", id: "research-cli" },
+        phase: stateName,
+        kind: "gate_result",
+        payload: { gate, result: "fail", reason: gateResult.reason },
+        contextPackVersion:
+          readJson(join(runDir, "context-pack.json")).metadata?.context_pack_version ?? 1,
+      });
+      throw new Error(
+        JSON.stringify({
+          ok: false,
+          gate,
+          result: "fail",
+          currentState: stateName,
+          reason: gateResult.reason,
+          runDir,
+        }),
+      );
+    }
+
     const result = applyEvent(runDir, { type: "GATE_PASSED", gate });
+    writeGateLastResult(runDir, { gate, result: "pass", reason: "pass" });
     const nextState = result.runState.currentState;
-    execFileSync(process.execPath, [BUMP_SCRIPT, runDir, nextState], { cwd: ROOT, stdio: "inherit" });
+    execFileSync(process.execPath, [BUMP_SCRIPT, runDir, nextState], {
+      cwd: ROOT,
+      stdio: "inherit",
+      env: { ...process.env, RESEARCH_LOCK_HELD: "1" },
+    });
     const pack = readJson(join(runDir, "context-pack.json"));
-    appendReplayEntry(runDir, {
+    const contextPackSnapshot =
+      `snapshots/context-pack@v${pack.metadata.context_pack_version}.json`;
+    appendReplayEntry(runDir, createReplayEntry({
+      runDir,
       phase: stateName,
-      contextPackSnapshot: `snapshots/context-pack@v${pack.metadata.context_pack_version}.json`,
-      artifact: null,
+      nextPhase: nextState,
+      workflowId: spec.workflowId,
+      schemaVersion: spec.schemaVersion,
+      contextPackSnapshot,
+      artifacts: replayArtifacts(runDir, stateDef),
       gate,
       gateResult: "pass",
-    });
-    console.log(
-      JSON.stringify({ ok: true, gate, result: "pass", from: stateName, to: nextState }),
-    );
-    return;
-  }
-
-  const gateResult = runGateScript(gate, runDir);
-  if (!gateResult.ok) {
-    writeGateLastResult(runDir, {
-      gate,
-      result: "fail",
-      reason: gateResult.reason,
-    });
+    }));
     appendObservation(runDir, {
       ts: new Date().toISOString(),
       actor: { type: "system", id: "research-cli" },
       phase: stateName,
       kind: "gate_result",
-      payload: { gate, result: "fail", reason: gateResult.reason },
-      contextPackVersion: readJson(join(runDir, "context-pack.json")).metadata?.context_pack_version ?? 1,
+      payload: { gate, result: "pass", nextState },
+      contextPackVersion: pack.metadata?.context_pack_version ?? 1,
     });
-    console.error(
-      JSON.stringify({
-        ok: false,
-        gate,
-        result: "fail",
-        currentState: stateName,
-        reason: gateResult.reason,
-        runDir,
-      }),
+
+    console.log(
+      JSON.stringify({ ok: true, gate, result: "pass", from: stateName, to: nextState, runDir }),
     );
-    process.exit(1);
-  }
-
-  writeGateLastResult(runDir, { gate, result: "pass", reason: "pass" });
-  const result = applyEvent(runDir, { type: "GATE_PASSED", gate });
-  const nextState = result.runState.currentState;
-  execFileSync(process.execPath, [BUMP_SCRIPT, runDir, nextState], { cwd: ROOT, stdio: "inherit" });
-  const pack = readJson(join(runDir, "context-pack.json"));
-  const outputs = stateDef.outputs ?? [];
-  appendReplayEntry(runDir, {
-    phase: stateName,
-    contextPackSnapshot: `snapshots/context-pack@v${pack.metadata.context_pack_version}.json`,
-    artifact: outputs[0] ?? null,
-    gate,
-    gateResult: "pass",
   });
-  appendObservation(runDir, {
-    ts: new Date().toISOString(),
-    actor: { type: "system", id: "research-cli" },
-    phase: stateName,
-    kind: "gate_result",
-    payload: { gate, result: "pass", nextState },
-    contextPackVersion: pack.metadata?.context_pack_version ?? 1,
-  });
+}
 
-  console.log(
-    JSON.stringify({ ok: true, gate, result: "pass", from: stateName, to: nextState, runDir }),
+async function cmdVerify(runDirArg, flags) {
+  const runDir = resolveRunDir(runDirArg, flags);
+  const result = await withRunLock(runDir, async () =>
+    verifyRun(runDir, loadWorkflowSpec()),
   );
+  const output = { ...result, runDir };
+  if (!result.ok) {
+    throw new Error(JSON.stringify(output));
+  }
+  console.log(JSON.stringify(output));
 }
 
 async function main() {
@@ -381,10 +464,13 @@ async function main() {
       cmdStatus(rest[0], flags);
       break;
     case "apply":
-      cmdApply(rest[0], rest[1], flags);
+      await cmdApply(rest[0], rest[1], flags);
       break;
     case "advance":
-      cmdAdvance(rest[0], flags);
+      await cmdAdvance(rest[0], flags);
+      break;
+    case "verify":
+      await cmdVerify(rest[0], flags);
       break;
     default:
       console.error(`unknown command: ${cmd}`);
@@ -401,6 +487,8 @@ export {
   cmdAdvance,
   cmdStatus,
   cmdApply,
+  cmdVerify,
+  validateRunId,
 };
 
 const invokedAsCli =

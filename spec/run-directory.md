@@ -54,7 +54,18 @@ When `run-dir` is omitted:
 
 ## Replay
 
-`replay-chain.json` entries link snapshot + artifact + gate result for phase-level replay.
+`replay-chain.json` entries link versioned snapshots, run-local artifacts,
+SHA-256 digests, runtime metadata, and gate outcomes for auditable phase resume.
 Successful `advance` appends an entry automatically.
+
+Validate a run before resuming:
+
+```bash
+node scripts/research-cli.mjs verify .research/<run-id>
+```
+
+The verifier checks run Schemas, contiguous sequence numbers, safe relative
+paths, referenced files, and hashes. This mechanism does not cache complete
+LLM or tool calls and is not an offline deterministic replay engine.
 
 See `docs/examples/sample-research-run/` for a complete example.

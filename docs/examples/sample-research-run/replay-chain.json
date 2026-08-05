@@ -2,31 +2,53 @@
   "entries": [
     {
       "seq": 1,
+      "recordedAt": "2026-07-24T06:05:00Z",
       "phase": "brief",
+      "nextPhase": "explore",
+      "workflowId": "deep-research",
+      "schemaVersion": 1,
+      "nodeVersion": "v22.0.0",
       "contextPackSnapshot": "snapshots/context-pack@v1.json",
-      "promptHash": "sha256:brief-example",
-      "model": "opus",
-      "artifact": "artifacts/research-brief.json",
+      "contextPackSha256": "sha256:59f8b843cb2c029d128640865b48084cc200f19d244f7e0a9bd578ac09c750be",
+      "artifacts": [
+        {
+          "path": "artifacts/research-brief.json",
+          "sha256": "sha256:8b3c00322a8ac9e951c485afcd2c81848ea2e67c61dcce067b62e4d69610f5e9"
+        }
+      ],
       "gate": "brief-complete",
       "gateResult": "pass"
     },
     {
       "seq": 2,
+      "recordedAt": "2026-07-24T06:35:00Z",
       "phase": "verify",
+      "nextPhase": "consolidate",
+      "workflowId": "deep-research",
+      "schemaVersion": 1,
+      "nodeVersion": "v22.0.0",
       "contextPackSnapshot": "snapshots/context-pack@v1.json",
-      "promptHash": "sha256:verify-example",
-      "model": "opus",
-      "artifact": "artifacts/evidence/runtime-core.json",
+      "contextPackSha256": "sha256:59f8b843cb2c029d128640865b48084cc200f19d244f7e0a9bd578ac09c750be",
+      "artifacts": [
+        {
+          "path": "artifacts/evidence/runtime-core.json",
+          "sha256": "sha256:d5836a4a0d00bb328ee3114588b52c1dc687d4c17248fbe3bd725058e77de263"
+        }
+      ],
       "gate": "evidence-table-valid",
       "gateResult": "pass"
     },
     {
       "seq": 3,
+      "recordedAt": "2026-07-24T07:00:00Z",
       "phase": "decide",
+      "nextPhase": "done",
+      "workflowId": "deep-research",
+      "schemaVersion": 1,
+      "nodeVersion": "v22.0.0",
       "contextPackSnapshot": "context-pack.json",
-      "promptHash": "sha256:decide-example",
-      "model": "opus",
-      "artifact": "docs/design/sample-agent-selection.md",
+      "contextPackSha256": "sha256:534f969f01e585715a05cc641b2900e51a77041c444fd96ee0ab1007489c3453",
+      "artifacts": [],
       "gate": "decision-doc-complete",
       "gateResult": "pass"
     }

@@ -37,7 +37,19 @@ export function listEvidenceFiles(runDir) {
 }
 
 export function countWords(text) {
-  return text.split(/\s+/).filter(Boolean).length;
+  return measureContent(text).latinWords;
+}
+
+export function measureContent(text) {
+  const cjkPattern =
+    /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+  const tokens = text.match(/[\p{L}\p{N}]+/gu) ?? [];
+  return {
+    latinWords: tokens.filter((token) => !cjkPattern.test(token)).length,
+    cjkChars: (text.match(
+      /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu,
+    ) ?? []).length,
+  };
 }
 
 export function countSections(text) {

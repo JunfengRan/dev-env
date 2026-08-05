@@ -49,6 +49,104 @@ result = reduce(runState, { type: "GATE_PASSED", gate: "evidence-table-valid" },
 runState = result.runState;
 assert("verify pass moves to consolidate", runState.currentState === "consolidate", runState.currentState);
 
+const initial = createInitialRunState(spec, "invariant-test");
+result = reduce(initial, { type: "GATE_PASSED", gate: "wrong-gate" }, spec);
+assert(
+  "wrong gate is rejected",
+  result.error?.includes("does not match"),
+  result.error ?? result.runState.currentState,
+);
+
+const verifyPending = {
+  ...initial,
+  currentState: "verify",
+  barrier: { expected: 2, completed: 1, pendingSubagents: ["t2"] },
+};
+result = reduce(
+  verifyPending,
+  { type: "GATE_PASSED", gate: "evidence-table-valid" },
+  spec,
+);
+assert(
+  "incomplete barrier is rejected",
+  result.error?.includes("barrier incomplete"),
+  result.error ?? result.runState.currentState,
+);
+
+result = reduce(
+  verifyPending,
+  { type: "SUBAGENT_COMPLETED", subagentId: "unknown" },
+  spec,
+);
+assert(
+  "unknown subagent completion is rejected",
+  result.error?.includes("not pending"),
+  result.error ?? String(result.runState.barrier.completed),
+);
+
+const verifyCompleted = {
+  ...initial,
+  currentState: "verify",
+  barrier: { expected: 1, completed: 1, pendingSubagents: [] },
+};
+result = reduce(
+  verifyCompleted,
+  { type: "SUBAGENT_COMPLETED", subagentId: "t1" },
+  spec,
+);
+assert(
+  "duplicate subagent completion is rejected",
+  result.error?.includes("not pending"),
+  result.error ?? String(result.runState.barrier.completed),
+);
+
+result = reduce(
+  verifyPending,
+  { type: "PHASE_ENTER", state: "explore", evidenceTargets: [] },
+  spec,
+);
+assert(
+  "phase enter mismatch is rejected",
+  result.error?.includes("does not match"),
+  result.error ?? "no error",
+);
+
+result = reduce(
+  {
+    ...initial,
+    currentState: "verify",
+  },
+  {
+    type: "PHASE_ENTER",
+    state: "verify",
+    evidenceTargets: [{ targetId: "t1" }, { targetId: "t1" }],
+  },
+  spec,
+);
+assert(
+  "duplicate evidence target ids are rejected",
+  result.error?.includes("unique"),
+  result.error ?? "no error",
+);
+
+result = reduce(
+  {
+    ...initial,
+    currentState: "verify",
+  },
+  {
+    type: "PHASE_ENTER",
+    state: "verify",
+    evidenceTargets: [{ targetId: "../outside" }],
+  },
+  spec,
+);
+assert(
+  "unsafe evidence target ids are rejected",
+  result.error?.includes("safe identifiers"),
+  result.error ?? "no error",
+);
+
 result = reduce(runState, { type: "USER_ABORT" }, spec);
 runState = result.runState;
 assert("abort moves to aborted", runState.currentState === "aborted" && runState.aborted === true);

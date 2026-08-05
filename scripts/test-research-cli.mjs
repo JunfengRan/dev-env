@@ -38,16 +38,37 @@ function runCli(args, opts = {}) {
   });
 }
 
+function cliFails(args) {
+  try {
+    runCli(args);
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
 function main() {
   const researchRoot = join(ROOT, ".research");
-  const runId = `cli-test-${Date.now().toString(36)}`;
+  const testHash = Date.now().toString(36).slice(-8).padStart(5, "0");
+  const runId = `2026-08-05-cli-test-${testHash}`;
   const runDir = join(researchRoot, runId);
+  const invalidRunId = "invalid/run-id";
+  const invalidRunDir = join(researchRoot, invalidRunId);
+  const missingSlugRunId = `2026-08-05-missing-slug-${testHash}`;
+  const missingSlugRunDir = join(researchRoot, missingSlugRunId);
 
   try {
+    assert("init rejects invalid run id", cliFails(["init", invalidRunId]));
+    assert(
+      "init rejects missing slug value",
+      cliFails(["init", missingSlugRunId, "--slug"]),
+    );
+    assert("status rejects missing run-id value", cliFails(["status", "--run-id"]));
+
     runCli(["init", runId, "--slug", "cli-test"]);
     assert("init creates state.json", existsSync(join(runDir, "state.json")));
     const state = readJson(join(runDir, "state.json"));
@@ -56,6 +77,19 @@ function main() {
     const statusOut = runCli(["status", runDir]);
     const status = JSON.parse(statusOut);
     assert("status reports brief", status.currentState === "brief");
+
+    assert(
+      "apply rejects direct gate transition events",
+      cliFails([
+        "apply",
+        runDir,
+        JSON.stringify({ type: "GATE_PASSED", gate: "brief-complete" }),
+      ]),
+    );
+    assert(
+      "rejected direct gate event keeps current state",
+      readJson(join(runDir, "state.json")).currentState === "brief",
+    );
 
     // advance without artifacts should fail and write gateLastResult
     let failedAdvance = false;
@@ -106,6 +140,13 @@ function main() {
     );
     const replay = readJson(join(runDir, "replay-chain.json"));
     assert("replay-chain has entry", (replay.entries?.length ?? 0) >= 1);
+    const verifyOut = JSON.parse(runCli(["verify", runDir]));
+    assert("verify command accepts intact run", verifyOut.ok === true);
+    const briefPath = join(runDir, "artifacts", "research-brief.json");
+    const originalBrief = readFileSync(briefPath, "utf8");
+    writeFileSync(briefPath, "tampered", "utf8");
+    assert("verify command rejects artifact drift", cliFails(["verify", runDir]));
+    writeFileSync(briefPath, originalBrief, "utf8");
 
     // apply SUBAGENT_COMPLETED via CLI on a verify-like barrier state
     const verifyDir = mkdtempSync(join(tmpdir(), "research-cli-verify-"));
@@ -157,6 +198,10 @@ function main() {
     rmSync(verifyDir, { recursive: true, force: true });
   } finally {
     if (existsSync(runDir)) rmSync(runDir, { recursive: true, force: true });
+    if (existsSync(invalidRunDir)) rmSync(invalidRunDir, { recursive: true, force: true });
+    if (existsSync(missingSlugRunDir)) {
+      rmSync(missingSlugRunDir, { recursive: true, force: true });
+    }
   }
 
   // dedicated after-subagent test

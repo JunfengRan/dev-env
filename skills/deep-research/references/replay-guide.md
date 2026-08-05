@@ -1,23 +1,35 @@
-# Replay 与续跑
+# 可审计阶段续跑
 
 ## replay-chain.json
 
-每条 entry：`seq`, `phase`, `contextPackSnapshot`, `artifact`, `gate`, `gateResult`
+每条 entry 记录：
 
-## 回放语义
+- 连续 `seq` 与 `recordedAt`
+- `phase` / `nextPhase`
+- workflow、Schema、Node 版本
+- ContextPack snapshot 路径与 SHA-256
+- run 内阶段 artifacts 路径与 SHA-256
+- gate 与 gate result
 
-```text
-context-pack@vN + prompt + model → artifact
+成功 `advance` 会自动追加记录。运行：
+
+```bash
+node scripts/research-cli.mjs verify .research/<run-id>
 ```
 
-MVP：人工从 `snapshots/context-pack@vN.json` 恢复上下文，重跑单 phase。
+可检查 Schema、引用路径、序号和内容漂移。
 
-## 续跑失败 phase
+## 能力边界
 
-1. 将 `state.json` currentState 设回目标 phase
-2. 从 replay-chain 对应 entry 读 snapshot
-3. 复制 snapshot 到 `context-pack.json` head
-4. 重执行该 phase 指令，gate 通过后 append 新 replay entry
+这是可审计的 **phase resume**，不是完整确定性 replay。它不缓存 LLM
+或工具输入输出，不能离线复现模型调用。
+
+需要续跑失败 phase 时：
+
+1. 先运行 `research verify`，确认现有记录未漂移。
+2. 读取对应 entry 的 ContextPack snapshot。
+3. 通过 reducer/CLI 恢复目标 state，不直接绕过 gate。
+4. 重执行 phase；gate 通过后由 CLI 追加新 entry。
 
 ## 示例
 

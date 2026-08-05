@@ -6,7 +6,7 @@ import {
   pass,
   readText,
   countSections,
-  countWords,
+  measureContent,
 } from "../gate-utils.mjs";
 
 const runDir = process.argv[2];
@@ -19,8 +19,11 @@ const text = readText(notesPath);
 if (countSections(text) < 3) {
   fail("explore-notes.md must have at least 3 ## sections");
 }
-if (countWords(text) < 200) {
-  fail("explore-notes.md must have at least 200 words");
+const content = measureContent(text);
+if (content.latinWords < 200 && content.cjkChars < 400) {
+  fail(
+    "explore-notes.md must have at least 200 Latin words or 400 CJK characters",
+  );
 }
 
 pass("explore-min-depth: ok");

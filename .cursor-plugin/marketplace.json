@@ -1,0 +1,22 @@
+{
+  "name": "dev-env-plugins",
+  "owner": {
+    "name": "Junfeng Ran"
+  },
+  "metadata": {
+    "description": "Lightweight Cursor agent workflow plugins",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "deep-research-gates",
+      "source": "./plugins/deep-research-gates",
+      "description": "Deterministic gates and barrier synchronization for deep research."
+    },
+    {
+      "name": "continual-learning-rules",
+      "source": "./plugins/continual-learning-rules",
+      "description": "Incremental preference learning into categorized Cursor rules."
+    }
+  ]
+}

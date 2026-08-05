@@ -28,9 +28,11 @@
 | [`plugins/`](plugins/) | continual-learning-rules、deep-research-gates |
 | [`docs/`](docs/) | 示例、产出目录、可选项目 overlay |
 
-## 快速安装（仅复制，无安装脚本）
+## 快速安装与插件分发
 
 按需复制到目标项目或用户目录。建议顺序：最小集 → 门禁插件 → 可选组件。
+
+运行时要求：Node.js 22–26、npm 10+。插件 hook 额外需要 Bun 1.3+。
 
 ### 1. 最小集（项目级）
 
@@ -56,6 +58,10 @@ hooks 通过 `bun run` 执行：
 ```bash
 cp -r plugins/deep-research-gates ~/.cursor/plugins/
 ```
+
+仓库根目录包含 `.cursor-plugin/marketplace.json`，也可把本仓作为多插件
+marketplace 添加到 Cursor，再安装 `deep-research-gates` 或
+`continual-learning-rules`。
 
 插件在 `stop` 时调用工作区 `node scripts/research-cli.mjs advance`：gate 失败会写回 ContextPack `gateLastResult`，并跟进修复消息。
 
@@ -97,6 +103,9 @@ npm run research -- status .research/2026-07-24-my-topic-abc12
 # 写完当前 phase artifacts 后跑 gate 并推进
 npm run research -- advance
 npm run research -- advance .research/2026-07-24-my-topic-abc12
+
+# 校验 run Schema、阶段记录、快照和 artifact 哈希
+npm run research -- verify .research/2026-07-24-my-topic-abc12
 
 # 手动应用 reducer 事件（如 SUBAGENT_COMPLETED）
 npm run research -- apply .research/<run-id> '{"type":"SUBAGENT_COMPLETED","subagentId":"runtime-core"}'
@@ -172,7 +181,11 @@ npm run validate:mermaid
 npm run validate:research-spec
 npm run test:gates
 npm run test:reducer
+npm run test:persistence
+npm run test:integrity
+npm run test:plugins
 npm run test:research-cli
+npm run validate:plugins
 ```
 
 默认 Mermaid 校验为 **lint-only**（可跳过 Chromium 下载）。若本机已有 Chrome，可额外渲染：
@@ -180,6 +193,9 @@ npm run test:research-cli
 ```bash
 npm run validate:mermaid -- --render
 ```
+
+`replay-chain.json` 提供带 SHA-256 和运行时版本的**可审计阶段续跑**，
+用于检测快照或产物漂移；它不缓存完整模型/工具调用，因此不宣称离线确定性重放。
 
 ## License
 

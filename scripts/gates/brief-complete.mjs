@@ -18,10 +18,18 @@ if (!brief.scope || typeof brief.scope !== "string") {
 if (!Array.isArray(brief.evidenceTargets) || brief.evidenceTargets.length === 0) {
   fail("research-brief.json must include non-empty evidenceTargets[]");
 }
+const targetIds = [];
 for (const target of brief.evidenceTargets) {
   if (!target.targetId || !target.repoPath) {
     fail("each evidenceTarget requires targetId and repoPath");
   }
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(target.targetId)) {
+    fail("each evidenceTarget targetId must be a safe identifier");
+  }
+  targetIds.push(target.targetId);
+}
+if (new Set(targetIds).size !== targetIds.length) {
+  fail("evidenceTarget targetIds must be unique");
 }
 
 pass("brief-complete: ok");

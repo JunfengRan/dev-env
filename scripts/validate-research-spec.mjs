@@ -6,6 +6,7 @@ import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import YAML from "yaml";
 import { createInitialRunState, loadWorkflowSpec, reduce } from "./research-reducer.mjs";
+import { verifyRun } from "./run-integrity.mjs";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(SCRIPT_DIR, "..");
@@ -95,6 +96,16 @@ function main() {
     contextPackVersion: 1,
   };
   validateSchema(sampleObservation, join(ROOT, "spec", "observation.schema.json"), "observation");
+
+  const sampleRunDir = join(ROOT, "docs", "examples", "sample-research-run");
+  const sampleRunResult = verifyRun(sampleRunDir, spec);
+  if (!sampleRunResult.ok) {
+    console.error("sample research run validation failed:");
+    for (const error of sampleRunResult.errors) {
+      console.error(`  - ${error}`);
+    }
+    process.exit(1);
+  }
 
   const run = createInitialRunState(loadWorkflowSpec());
   const afterPass = reduce(run, { type: "GATE_PASSED", gate: "brief-complete" }, spec);

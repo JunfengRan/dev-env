@@ -69,6 +69,7 @@ node scripts/research-cli.mjs init <run-id> --slug <slug>
 node scripts/research-cli.mjs init <run-id> --slug <slug>
 node scripts/research-cli.mjs status [run-dir]
 node scripts/research-cli.mjs advance [run-dir]
+node scripts/research-cli.mjs verify [run-dir]
 node scripts/research-cli.mjs apply <run-dir> '<event-json>'
 node scripts/gates/<gate>.mjs .research/<run-id>
 node plugins/deep-research-gates/scripts/after-subagent-complete.mjs .research/<run-id> <subagentId> <artifact>
