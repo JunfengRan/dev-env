@@ -46,6 +46,6 @@
     "@mermaid-js/mermaid-cli": "^11.6.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
-    "yaml": "^2.8.0"
+    "yaml": "^2.9.1"
   }
 }
