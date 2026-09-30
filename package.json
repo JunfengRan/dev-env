@@ -43,7 +43,7 @@
     "validate": "npm run validate:mermaid && npm run validate:research-spec && npm run validate:plugins && npm run validate:ci && npm run test:gates && npm run test:reducer && npm run test:persistence && npm run test:integrity && npm run test:plugins && npm run test:research-cli"
   },
   "devDependencies": {
-    "@mermaid-js/mermaid-cli": "^11.6.0",
+    "@mermaid-js/mermaid-cli": "^12.0.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "yaml": "^2.8.0"
